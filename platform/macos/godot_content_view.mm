@@ -34,6 +34,8 @@
 #import "godot_window.h"
 #import "key_mapping_macos.h"
 
+#include <os/log.h>
+
 #include "main/main.h"
 
 @implementation GodotContentLayerDelegate
@@ -42,11 +44,6 @@
 	self = [super init];
 	window_id = DisplayServer::INVALID_WINDOW_ID;
 	need_redraw = false;
-
-	// Enable multitouch on the trackpad
-	allowedTouchTypes = NSTouchTypeMaskIndirect;
-	wantsRestingTouches = true;
-
 	return self;
 }
 
@@ -152,6 +149,13 @@
 
 	[self registerForDraggedTypes:[NSArray arrayWithObject:NSPasteboardTypeFileURL]];
 	marked_text = [[NSMutableAttributedString alloc] init];
+
+
+	// Enable multitouch on the trackpad
+	self.allowedTouchTypes = NSTouchTypeMaskIndirect;
+	self.wantsRestingTouches = true;
+
+
 	return self;
 }
 
@@ -673,7 +677,7 @@
 	}*/
 }
 
-- (int)getTouchIDForTouch:(UITouch *)p_touch {
+- (int)getTouchIDForTouch:(NSTouch *)p_touch {
 	/*int first = -1;
 	for (int i = 0; i < max_touches; i++) {
 		if (first == -1 && godot_touches[i] == nullptr) {
@@ -693,7 +697,7 @@
 	return -1;
 }
 
-- (int)removeTouch:(UITouch *)p_touch {
+- (int)removeTouch:(NSTouch *)p_touch {
 	int remaining = 0;
 	/*for (int i = 0; i < max_touches; i++) {
 		if (godot_touches[i] == nullptr) {
@@ -714,42 +718,42 @@
 	}*/
 }
 
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
-	for (UITouch *touch in touches) {
+- (void)touchesBegan:(NSSet *)touches withEvent:(NSEvent *)event {
+	for (NSTouch *touch in touches) {
 		int tid = [self getTouchIDForTouch:touch];
 		ERR_FAIL_COND(tid == -1);
 		CGPoint touchPoint = [touch locationInView:self];
 		//DisplayServerAppleEmbedded::get_singleton()->touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, true, touch.tapCount > 1);
-		print("touchesBegan");
+		NSLog(@"touchesBegan");
 	}
 }
 
-- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
-	for (UITouch *touch in touches) {
+- (void)touchesMoved:(NSSet *)touches withEvent:(NSEvent *)event {
+	for (NSTouch *touch in touches) {
 		int tid = [self getTouchIDForTouch:touch];
 		ERR_FAIL_COND(tid == -1);
 		CGPoint touchPoint = [touch locationInView:self];
 		CGPoint prev_point = [touch previousLocationInView:self];
-		CGFloat alt = [touch altitudeAngle];
-		CGVector azim = [touch azimuthUnitVectorInView:self];
+		//CGFloat alt = [touch altitudeAngle];
+		//CGVector azim = [touch azimuthUnitVectorInView:self];
 		//DisplayServerAppleEmbedded::get_singleton()->touch_drag(tid, prev_point.x * self.contentScaleFactor, prev_point.y * self.contentScaleFactor, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, [touch force] / [touch maximumPossibleForce], Vector2(azim.dx, azim.dy) * Math::cos(alt));
-		print("touchesMoved");
+		NSLog(@"touchesMoved");
 	}
 }
 
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
-	for (UITouch *touch in touches) {
+- (void)touchesEnded:(NSSet *)touches withEvent:(NSEvent *)event {
+	for (NSTouch *touch in touches) {
 		int tid = [self getTouchIDForTouch:touch];
 		ERR_FAIL_COND(tid == -1);
 		[self removeTouch:touch];
 		CGPoint touchPoint = [touch locationInView:self];
 		//DisplayServerAppleEmbedded::get_singleton()->touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, false, false);
-		print("touchesEnded");
+		NSLog(@"touchesEnded");
 	}
 }
 
-- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
-	/*for (UITouch *touch in touches) {
+- (void)touchesCancelled:(NSSet *)touches withEvent:(NSEvent *)event {
+	/*for (NSTouch *touch in touches) {
 		int tid = [self getTouchIDForTouch:touch];
 		ERR_FAIL_COND(tid == -1);
 		DisplayServerAppleEmbedded::get_singleton()->touches_canceled(tid);
