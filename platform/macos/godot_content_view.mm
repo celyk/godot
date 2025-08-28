@@ -42,6 +42,11 @@
 	self = [super init];
 	window_id = DisplayServer::INVALID_WINDOW_ID;
 	need_redraw = false;
+
+	// Enable multitouch on the trackpad
+	allowedTouchTypes = NSTouchTypeMaskIndirect;
+	wantsRestingTouches = true;
+
 	return self;
 }
 
@@ -659,6 +664,96 @@
 	[self addTrackingArea:tracking_area];
 	[super updateTrackingAreas];
 }
+
+// MARK: Mouse touches
+
+- (void)initTouches {
+	for (int i = 0; i < max_touches; i++) {
+		godot_touches[i] = nullptr;
+	}
+}
+
+- (int)getTouchIDForTouch:(UITouch *)p_touch {
+	int first = -1;
+	for (int i = 0; i < max_touches; i++) {
+		if (first == -1 && godot_touches[i] == nullptr) {
+			first = i;
+			continue;
+		}
+		if (godot_touches[i] == p_touch) {
+			return i;
+		}
+	}
+
+	if (first != -1) {
+		godot_touches[first] = p_touch;
+		return first;
+	}
+
+	return -1;
+}
+
+- (int)removeTouch:(UITouch *)p_touch {
+	int remaining = 0;
+	for (int i = 0; i < max_touches; i++) {
+		if (godot_touches[i] == nullptr) {
+			continue;
+		}
+		if (godot_touches[i] == p_touch) {
+			godot_touches[i] = nullptr;
+		} else {
+			++remaining;
+		}
+	}
+	return remaining;
+}
+
+- (void)clearTouches {
+	for (int i = 0; i < max_touches; i++) {
+		godot_touches[i] = nullptr;
+	}
+}
+
+- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+	for (UITouch *touch in touches) {
+		int tid = [self getTouchIDForTouch:touch];
+		ERR_FAIL_COND(tid == -1);
+		CGPoint touchPoint = [touch locationInView:self];
+		DisplayServerAppleEmbedded::get_singleton()->touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, true, touch.tapCount > 1);
+	}
+}
+
+- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
+	for (UITouch *touch in touches) {
+		int tid = [self getTouchIDForTouch:touch];
+		ERR_FAIL_COND(tid == -1);
+		CGPoint touchPoint = [touch locationInView:self];
+		CGPoint prev_point = [touch previousLocationInView:self];
+		CGFloat alt = [touch altitudeAngle];
+		CGVector azim = [touch azimuthUnitVectorInView:self];
+		DisplayServerAppleEmbedded::get_singleton()->touch_drag(tid, prev_point.x * self.contentScaleFactor, prev_point.y * self.contentScaleFactor, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, [touch force] / [touch maximumPossibleForce], Vector2(azim.dx, azim.dy) * Math::cos(alt));
+	}
+}
+
+- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
+	for (UITouch *touch in touches) {
+		int tid = [self getTouchIDForTouch:touch];
+		ERR_FAIL_COND(tid == -1);
+		[self removeTouch:touch];
+		CGPoint touchPoint = [touch locationInView:self];
+		DisplayServerAppleEmbedded::get_singleton()->touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, false, false);
+	}
+}
+
+- (void)touchesCancelled:(NSSet *)touches withEvent:(UIEvent *)event {
+	for (UITouch *touch in touches) {
+		int tid = [self getTouchIDForTouch:touch];
+		ERR_FAIL_COND(tid == -1);
+		DisplayServerAppleEmbedded::get_singleton()->touches_canceled(tid);
+	}
+	[self clearTouches];
+}
+
 
 // MARK: Keyboard
 
