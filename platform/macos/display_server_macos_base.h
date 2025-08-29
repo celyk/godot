@@ -52,7 +52,6 @@ class DisplayServerMacOSBase : public DisplayServer {
 	mutable int current_layout = 0;
 	mutable bool keyboard_layout_dirty = true;
 
-
 protected:
 	_THREAD_SAFE_CLASS_
 

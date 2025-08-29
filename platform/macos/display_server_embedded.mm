@@ -455,7 +455,6 @@ void DisplayServerEmbedded::send_input_text(const String &p_text, WindowID p_id)
 void DisplayServerEmbedded::send_window_event(DisplayServer::WindowEvent p_event, WindowID p_id) const {
 	const Callable *cb = window_event_callbacks.getptr(p_id);
 	if (cb) {
-		//print_line(p_event->get_class_name());
 		_window_callback(*cb, int(p_event));
 	}
 }

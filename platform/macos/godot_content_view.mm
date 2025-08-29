@@ -34,8 +34,6 @@
 #import "godot_window.h"
 #import "key_mapping_macos.h"
 
-#include <os/log.h>
-
 #include "main/main.h"
 
 @implementation GodotContentLayerDelegate
