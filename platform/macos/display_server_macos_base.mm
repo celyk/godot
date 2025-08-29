@@ -304,21 +304,28 @@ void DisplayServerMacOSBase::show_emoji_and_symbol_picker() const {
 
 // MARK: Touches
 
-void DisplayServerMacOSBase::touch_press(int p_idx, int p_x, int p_y, bool p_pressed, bool p_double_click) {
+void DisplayServerMacOSBase::touch_press(DisplayServer::WindowID window_id, int p_idx, int p_x, int p_y, bool p_pressed, bool p_double_click) {
+	NSLog(@"touch_press");
+
 	Ref<InputEventScreenTouch> ev;
 	ev.instantiate();
 
-	ev->set_index(p_idx);
+	ev->set_window_id(window_id);
+	ev->set_index(0);
 	ev->set_pressed(p_pressed);
 	ev->set_position(Vector2(p_x, p_y));
 	ev->set_double_tap(p_double_click);
 	perform_event(ev);
 }
 
-void DisplayServerMacOSBase::touch_drag(int p_idx, int p_prev_x, int p_prev_y, int p_x, int p_y, float p_pressure, Vector2 p_tilt) {
+void DisplayServerMacOSBase::touch_drag(DisplayServer::WindowID window_id, int p_idx, int p_prev_x, int p_prev_y, int p_x, int p_y, float p_pressure, Vector2 p_tilt) {
 	Ref<InputEventScreenDrag> ev;
 	ev.instantiate();
-	ev->set_index(p_idx);
+
+	NSLog(@"touch_drag");
+
+	ev->set_window_id(window_id);
+	ev->set_index(0);
 	ev->set_pressure(p_pressure);
 	ev->set_tilt(p_tilt);
 	ev->set_position(Vector2(p_x, p_y));
@@ -330,14 +337,18 @@ void DisplayServerMacOSBase::touch_drag(int p_idx, int p_prev_x, int p_prev_y, i
 void DisplayServerMacOSBase::perform_event(const Ref<InputEvent> &p_event) {
 	Input *input_singleton = Input::get_singleton();
 	if (input_singleton == nullptr) {
+		NSLog(@"ruhroh");
 		return;
 	}
+
+
+	NSLog(@"parse_input_event");
 
 	input_singleton->parse_input_event(p_event);
 }
 
-void DisplayServerMacOSBase::touches_canceled(int p_idx) {
-	touch_press(p_idx, -1, -1, false, false);
+void DisplayServerMacOSBase::touches_canceled(DisplayServer::WindowID window_id, int p_idx) {
+	touch_press(window_id, p_idx, -1, -1, false, false);
 }
 
 

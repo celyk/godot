@@ -725,8 +725,11 @@
 
 - (void)touchesBeganWithEvent:(NSEvent *)event {
 	//NSLog(@"touchesBeganWithEvent");
-	
+		
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	if (!ds || !ds->has_window(window_id)) {
+		return;
+	}
 
 	// Why can't I use inView:self ?
 	NSSet *touches = [event touchesMatchingPhase:NSTouchPhaseBegan inView:self];
@@ -735,36 +738,46 @@
 		NSLog(@"touchesBeganWithEventInnerLoop");
 		int tid = [self getTouchIDForTouch:touch.identity.hash];
 		ERR_FAIL_COND(tid == -1);
-		CGPoint touchPoint = [touch locationInView:self];
-		ds->touch_press(tid, touchPoint.x, touchPoint.y, true, false); //touch.tapCount > 1);
+		CGPoint touchPoint = [touch normalizedPosition];
+		ds->touch_press(window_id, tid, touchPoint.x, touchPoint.y, true, false); //touch.tapCount > 1);
 	}
 }
 
 - (void)touchesMovedWithEvent:(NSEvent *)event {
 	//NSLog(@"touchesMoved");
-	
+		
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	if (!ds || !ds->has_window(window_id)) {
+		return;
+	}
+
 	NSSet *touches = [event touchesMatchingPhase:NSTouchPhaseMoved inView:self];
 	//touches = [event touchesForView:self];
 	for (NSTouch *touch in touches) {
 		NSLog(@"touchesMovedInnerLoop");
 		int tid = [self getTouchIDForTouch:touch.identity.hash];
 		//NSLog(tid);
-		ERR_FAIL_COND(tid > 30);
+		//ERR_FAIL_COND(tid > 30);
 		ERR_FAIL_COND(tid == -1);
-		CGPoint touchPoint = [touch locationInView:self];
+		
+		//CGPoint touchPoint = [touch normalizedPosition];
 		CGFloat force = 1.0; // [touch force] / [touch maximumPossibleForce]
-		CGPoint prev_point = [touch previousLocationInView:self];
-		CGFloat alt = 0.0; //[touch altitudeAngle];
-		CGVector azim; // = [touch azimuthUnitVectorInView:self];
-		ds->touch_drag(tid, prev_point.x, prev_point.y, touchPoint.x, touchPoint.y, force, Vector2(azim.dx, azim.dy) * Math::cos(alt));
+		//CGPoint prev_point;// = [touch previousLocationInView:self];
+		//CGFloat alt = 0.0; //[touch altitudeAngle];
+		//CGVector azim; // = [touch azimuthUnitVectorInView:self];
+		//ds->touch_drag(tid, prev_point.x, prev_point.y, touchPoint.x, touchPoint.y, force, Vector2(azim.dx, azim.dy) * Math::cos(alt));
+		ds->touch_drag(window_id, tid, 100, 100, 100, 100, force, Vector2());
 	}
 }
 
 - (void)touchesEndedWithEvent:(NSEvent *)event {
 	//NSLog(@"touchesEndedWithEvent");
-
+	
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	if (!ds || !ds->has_window(window_id)) {
+		return;
+	}
+
 	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseEnded inView:self];
 	//touches = [event allTouches];
 	for (NSTouch *touch in touches) {
@@ -773,8 +786,8 @@
 		int tid = [self getTouchIDForTouch:touch.identity.hash];
 		ERR_FAIL_COND(tid == -1);
 		[self removeTouch:touch.identity.hash];
-		CGPoint touchPoint = [touch locationInView:self];
-		ds->touch_press(tid, touchPoint.x, touchPoint.y, false, false);
+		CGPoint touchPoint = [touch normalizedPosition];
+		ds->touch_press(window_id, tid, touchPoint.x, touchPoint.y, false, false);
 		
 	}
 }
@@ -783,13 +796,17 @@
 	//NSLog(@"touchesCancelledWithEvent");
 	
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	if (!ds || !ds->has_window(window_id)) {
+		return;
+	}
+
 	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseCancelled inView:self];
 	//touches = [event allTouches];
 	for (NSTouch *touch in touches) {
 		NSLog(@"touchesCancelledWithEventInnerLoop");
 		int tid = [self getTouchIDForTouch:touch.identity.hash];
 		ERR_FAIL_COND(tid == -1);
-		ds->touches_canceled(tid);
+		ds->touches_canceled(window_id, tid);
 	}
 	[self clearTouches];
 }

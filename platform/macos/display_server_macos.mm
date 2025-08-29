@@ -459,6 +459,11 @@ void DisplayServerMacOS::_dispatch_input_event(const Ref<InputEvent> &p_event) {
 			if (windows.has(event_from_window->get_window_id())) {
 				Callable callable = windows[event_from_window->get_window_id()].input_event_callback;
 				if (callable.is_valid()) {
+					if (true){//(p_event.get_class_name() == "InputEventScreenTouch"){
+						//const char32_t* test = p_event->get_class_name().get_data();
+						print_line(p_event->get_class_name(), event_from_window->get_window_id());
+					}
+
 					callable.call(p_event);
 				}
 			}
