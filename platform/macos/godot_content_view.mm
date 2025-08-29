@@ -152,6 +152,8 @@
 
 
 	// Enable multitouch on the trackpad
+	[self initTouches];
+	
 	NSLog(@"Enabling trackpad multitouch!");
 	self.allowedTouchTypes = NSTouchTypeMaskIndirect;
 	self.wantsRestingTouches = true;
@@ -675,13 +677,13 @@
 // MARK: Trackpad touches
 
 - (void)initTouches {
-	/*for (int i = 0; i < max_touches; i++) {
+	for (int i = 0; i < max_touches; i++) {
 		godot_touches[i] = nullptr;
-	}*/
+	}
 }
 
 - (int)getTouchIDForTouch:(NSTouch *)p_touch {
-	/*int first = -1;
+	int first = -1;
 	for (int i = 0; i < max_touches; i++) {
 		if (first == -1 && godot_touches[i] == nullptr) {
 			first = i;
@@ -695,14 +697,14 @@
 	if (first != -1) {
 		godot_touches[first] = p_touch;
 		return first;
-	}*/
-	return 0;
+	}
+
 	return -1;
 }
 
 - (int)removeTouch:(NSTouch *)p_touch {
 	int remaining = 0;
-	/*for (int i = 0; i < max_touches; i++) {
+	for (int i = 0; i < max_touches; i++) {
 		if (godot_touches[i] == nullptr) {
 			continue;
 		}
@@ -711,67 +713,83 @@
 		} else {
 			++remaining;
 		}
-	}*/
+	}
 	return remaining;
 }
 
 - (void)clearTouches {
-	/*for (int i = 0; i < max_touches; i++) {
+	for (int i = 0; i < max_touches; i++) {
 		godot_touches[i] = nullptr;
-	}*/
+	}
 }
 
 - (void)touchesBeganWithEvent:(NSEvent *)event {
-	NSLog(@"touchesBeganWithEvent");
+	//NSLog(@"touchesBeganWithEvent");
+	
+	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+
 	// Why can't I use inView:self ?
-	NSSet *touches = [event touchesMatchingPhase:NSTouchPhaseBegan inView:nil];
+	NSSet *touches = [event touchesMatchingPhase:NSTouchPhaseBegan inView:self];
+	//touches = [event allTouches];
 	for (NSTouch *touch in touches) {
+		NSLog(@"touchesBeganWithEventInnerLoop");
 		int tid = [self getTouchIDForTouch:touch];
 		ERR_FAIL_COND(tid == -1);
 		CGPoint touchPoint = [touch locationInView:self];
-		//DisplayServerAppleEmbedded::get_singleton()->touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, true, touch.tapCount > 1);
-		NSLog(@"touchesBeganWithEventInnerLoop");
+		ds->touch_press(tid, touchPoint.x, touchPoint.y, true, false); //touch.tapCount > 1);
 	}
 }
 
 - (void)touchesMovedWithEvent:(NSEvent *)event {
-	NSLog(@"touchesMoved");
-	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseChanged inView:nil];
+	//NSLog(@"touchesMoved");
+	
+	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	NSSet *touches = [event touchesMatchingPhase:NSTouchPhaseMoved inView:self];
+	//touches = [event touchesForView:self];
 	for (NSTouch *touch in touches) {
+		NSLog(@"touchesMovedInnerLoop");
 		int tid = [self getTouchIDForTouch:touch];
 		ERR_FAIL_COND(tid == -1);
 		CGPoint touchPoint = [touch locationInView:self];
+		CGFloat force = 1.0; // [touch force] / [touch maximumPossibleForce]
 		CGPoint prev_point = [touch previousLocationInView:self];
-		//CGFloat alt = [touch altitudeAngle];
-		//CGVector azim = [touch azimuthUnitVectorInView:self];
-		//DisplayServerAppleEmbedded::get_singleton()->touch_drag(tid, prev_point.x * self.contentScaleFactor, prev_point.y * self.contentScaleFactor, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, [touch force] / [touch maximumPossibleForce], Vector2(azim.dx, azim.dy) * Math::cos(alt));
-		NSLog(@"touchesMovedInnerLoop");
+		CGFloat alt = 0.0; //[touch altitudeAngle];
+		CGVector azim; // = [touch azimuthUnitVectorInView:self];
+		ds->touch_drag(tid, prev_point.x, prev_point.y, touchPoint.x, touchPoint.y, force, Vector2(azim.dx, azim.dy) * Math::cos(alt));
 	}
 }
 
 - (void)touchesEndedWithEvent:(NSEvent *)event {
-	NSLog(@"touchesMoved");
-	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseEnded inView:nil];
+	//NSLog(@"touchesEndedWithEvent");
+
+	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseEnded inView:self];
+	touches = [event allTouches];
 	for (NSTouch *touch in touches) {
+		NSLog(@"touchesEndedWithEventInnerLoop");
+		
 		int tid = [self getTouchIDForTouch:touch];
 		ERR_FAIL_COND(tid == -1);
 		[self removeTouch:touch];
 		CGPoint touchPoint = [touch locationInView:self];
-		//DisplayServerAppleEmbedded::get_singleton()->touch_press(tid, touchPoint.x * self.contentScaleFactor, touchPoint.y * self.contentScaleFactor, false, false);
-		NSLog(@"touchesEndedInnerLoop");
+		ds->touch_press(tid, touchPoint.x, touchPoint.y, false, false);
+		
 	}
 }
 
 - (void)touchesCancelledWithEvent:(NSEvent *)event {
-	NSLog(@"touchesCancelledWithEvent");
-	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseCancelled inView:nil];
+	//NSLog(@"touchesCancelledWithEvent");
+	
+	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseCancelled inView:self];
+	touches = [event allTouches];
 	for (NSTouch *touch in touches) {
+		NSLog(@"touchesCancelledWithEventInnerLoop");
 		int tid = [self getTouchIDForTouch:touch];
 		ERR_FAIL_COND(tid == -1);
-		//DisplayServerAppleEmbedded::get_singleton()->touches_canceled(tid);
-		NSLog(@"touchesCancelledWithEventInnerLoop");
+		ds->touches_canceled(tid);
 	}
-	//[self clearTouches];
+	[self clearTouches];
 }
 
 

@@ -52,6 +52,8 @@ class DisplayServerMacOSBase : public DisplayServer {
 	mutable int current_layout = 0;
 	mutable bool keyboard_layout_dirty = true;
 
+	void perform_event(const Ref<InputEvent> &p_event);
+
 protected:
 	_THREAD_SAFE_CLASS_
 
@@ -84,6 +86,13 @@ public:
 	virtual void tts_pause() override;
 	virtual void tts_resume() override;
 	virtual void tts_stop() override;
+
+	// MARK: Trackpad touches
+
+	void touch_press(int p_idx, int p_x, int p_y, bool p_pressed, bool p_double_click);
+	void touch_drag(int p_idx, int p_prev_x, int p_prev_y, int p_x, int p_y, float p_pressure, Vector2 p_tilt);
+	void touches_canceled(int p_idx);
+
 
 	DisplayServerMacOSBase();
 	~DisplayServerMacOSBase();
