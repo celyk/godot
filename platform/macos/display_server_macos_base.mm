@@ -311,7 +311,7 @@ void DisplayServerMacOSBase::touch_press(DisplayServer::WindowID window_id, int 
 	ev.instantiate();
 
 	ev->set_window_id(window_id);
-	ev->set_index(0);
+	ev->set_index(p_idx);
 	ev->set_pressed(p_pressed);
 	ev->set_position(Vector2(p_x, p_y));
 	ev->set_double_tap(p_double_click);
@@ -325,7 +325,7 @@ void DisplayServerMacOSBase::touch_drag(DisplayServer::WindowID window_id, int p
 	NSLog(@"touch_drag");
 
 	ev->set_window_id(window_id);
-	ev->set_index(0);
+	ev->set_index(p_idx);
 	ev->set_pressure(p_pressure);
 	ev->set_tilt(p_tilt);
 	ev->set_position(Vector2(p_x, p_y));

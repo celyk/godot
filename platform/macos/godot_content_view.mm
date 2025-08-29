@@ -758,13 +758,16 @@
 		//ERR_FAIL_COND(tid > 30);
 		ERR_FAIL_COND(tid == -1);
 		
-		//CGPoint touchPoint = [touch normalizedPosition];
+		CGPoint touchPoint = [touch normalizedPosition];
+		touchPoint.x = touchPoint.x * 1000; //ds.get_size().x;
+		touchPoint.y = touchPoint.y * 1000; //ds.get_size().y;
+		
 		CGFloat force = 1.0; // [touch force] / [touch maximumPossibleForce]
-		//CGPoint prev_point;// = [touch previousLocationInView:self];
+		CGPoint prev_point = touchPoint;// = [touch previousLocationInView:self];
 		//CGFloat alt = 0.0; //[touch altitudeAngle];
 		//CGVector azim; // = [touch azimuthUnitVectorInView:self];
 		//ds->touch_drag(tid, prev_point.x, prev_point.y, touchPoint.x, touchPoint.y, force, Vector2(azim.dx, azim.dy) * Math::cos(alt));
-		ds->touch_drag(window_id, tid, 100, 100, 100, 100, force, Vector2());
+		ds->touch_drag(window_id, tid, prev_point.x, prev_point.y, touchPoint.x, touchPoint.y, force, Vector2());
 	}
 }
 
