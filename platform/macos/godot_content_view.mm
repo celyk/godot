@@ -152,10 +152,11 @@
 	// Enable multitouch on the trackpad
 	[self initTouches];
 	
-	NSLog(@"Enabling trackpad multitouch!");
-	self.allowedTouchTypes = NSTouchTypeMaskIndirect;
-	self.wantsRestingTouches = true;
-
+	{
+		NSLog(@"Enabling trackpad multitouch!");
+		self.allowedTouchTypes = NSTouchTypeMaskIndirect;
+		self.wantsRestingTouches = true;
+	}
 
 	return self;
 }
@@ -722,27 +723,33 @@
 }
 
 - (void)touchesBeganWithEvent:(NSEvent *)event {
-	//NSLog(@"touchesBeganWithEvent");
-		
+	if (!Input::get_singleton()->is_emulating_touch_from_trackpad()){
+		return;
+	}
+	
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
 	if (!ds || !ds->has_window(window_id)) {
 		return;
 	}
 
-	// Why can't I use inView:self ?
 	NSSet *touches = [event touchesMatchingPhase:NSTouchPhaseBegan inView:self];
+
 	//touches = [event allTouches];
 	for (NSTouch *touch in touches) {
 		NSLog(@"touchesBeganWithEventInnerLoop");
 		int tid = [self getTouchIDForTouch:touch.identity.hash];
 		ERR_FAIL_COND(tid == -1);
 		CGPoint touchPoint = [touch normalizedPosition];
+		touchPoint.x = touchPoint.x * 1000; //ds.get_size().x;
+		touchPoint.y = touchPoint.y * 1000; //ds.get_size().y;
 		ds->touch_press(window_id, tid, touchPoint.x, touchPoint.y, true, false); //touch.tapCount > 1);
 	}
 }
 
 - (void)touchesMovedWithEvent:(NSEvent *)event {
-	//NSLog(@"touchesMoved");
+	if (!Input::get_singleton()->is_emulating_touch_from_trackpad()){
+		return;
+	}
 		
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
 	if (!ds || !ds->has_window(window_id)) {
@@ -761,7 +768,7 @@
 		CGPoint touchPoint = [touch normalizedPosition];
 		touchPoint.x = touchPoint.x * 1000; //ds.get_size().x;
 		touchPoint.y = touchPoint.y * 1000; //ds.get_size().y;
-		
+
 		CGFloat force = 1.0; // [touch force] / [touch maximumPossibleForce]
 		CGPoint prev_point = touchPoint;// = [touch previousLocationInView:self];
 		//CGFloat alt = 0.0; //[touch altitudeAngle];
@@ -772,7 +779,9 @@
 }
 
 - (void)touchesEndedWithEvent:(NSEvent *)event {
-	//NSLog(@"touchesEndedWithEvent");
+	if (!Input::get_singleton()->is_emulating_touch_from_trackpad()){
+		return;
+	}
 	
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
 	if (!ds || !ds->has_window(window_id)) {
@@ -788,14 +797,18 @@
 		ERR_FAIL_COND(tid == -1);
 		[self removeTouch:touch.identity.hash];
 		CGPoint touchPoint = [touch normalizedPosition];
+		touchPoint.x = touchPoint.x * 1000; //ds.get_size().x;
+		touchPoint.y = touchPoint.y * 1000; //ds.get_size().y;
 		ds->touch_press(window_id, tid, touchPoint.x, touchPoint.y, false, false);
 		
 	}
 }
 
 - (void)touchesCancelledWithEvent:(NSEvent *)event {
-	//NSLog(@"touchesCancelledWithEvent");
-	
+	if (!Input::get_singleton()->is_emulating_touch_from_trackpad()){
+		return;
+	}
+
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
 	if (!ds || !ds->has_window(window_id)) {
 		return;
