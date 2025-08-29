@@ -147,6 +147,17 @@
 
 	[self registerForDraggedTypes:[NSArray arrayWithObject:NSPasteboardTypeFileURL]];
 	marked_text = [[NSMutableAttributedString alloc] init];
+
+
+	// Enable multitouch on the trackpad
+	[self initTouches];
+	
+	{
+		NSLog(@"Enabling trackpad multitouch!");
+		self.allowedTouchTypes = NSTouchTypeMaskIndirect;
+		self.wantsRestingTouches = true;
+	}
+
 	return self;
 }
 
@@ -617,6 +628,8 @@
 }
 
 - (void)mouseEntered:(NSEvent *)event {
+	NSLog(@"mouseEntered");
+
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
 	if (!ds || !ds->has_window(window_id)) {
 		return;
@@ -659,6 +672,159 @@
 	[self addTrackingArea:tracking_area];
 	[super updateTrackingAreas];
 }
+
+// MARK: Trackpad touches
+
+- (void)initTouches {
+	for (int i = 0; i < max_touches; i++) {
+		godot_touches[i] = 0;
+	}
+}
+
+- (int)getTouchIDForTouch:(NSUInteger)p_touch {
+	int first = -1;
+	for (int i = 0; i < max_touches; i++) {
+		if (first == -1 && godot_touches[i] == 0) {
+			first = i;
+			continue;
+		}
+		if (godot_touches[i] == p_touch) {
+			return i;
+		}
+	}
+
+	if (first != -1) {
+		godot_touches[first] = p_touch;
+		return first;
+	}
+
+	return -1;
+}
+
+- (int)removeTouch:(NSUInteger)p_touch {
+	int remaining = 0;
+	for (int i = 0; i < max_touches; i++) {
+		if (godot_touches[i] == 0) {
+			continue;
+		}
+		if (godot_touches[i] == p_touch) {
+			godot_touches[i] = 0;
+		} else {
+			++remaining;
+		}
+	}
+	return remaining;
+}
+
+- (void)clearTouches {
+	for (int i = 0; i < max_touches; i++) {
+		godot_touches[i] = 0;
+	}
+}
+
+- (void)touchesBeganWithEvent:(NSEvent *)event {
+	if (!Input::get_singleton()->is_emulating_touch_from_trackpad()){
+		return;
+	}
+	
+	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	if (!ds || !ds->has_window(window_id)) {
+		return;
+	}
+
+	NSSet *touches = [event touchesMatchingPhase:NSTouchPhaseBegan inView:self];
+
+	//touches = [event allTouches];
+	for (NSTouch *touch in touches) {
+		NSLog(@"touchesBeganWithEventInnerLoop");
+		int tid = [self getTouchIDForTouch:touch.identity.hash];
+		ERR_FAIL_COND(tid == -1);
+		CGPoint touchPoint = [touch normalizedPosition];
+		touchPoint.x = touchPoint.x * 1000; //ds.get_size().x;
+		touchPoint.y = touchPoint.y * 1000; //ds.get_size().y;
+		ds->touch_press(window_id, tid, touchPoint.x, touchPoint.y, true, false); //touch.tapCount > 1);
+	}
+}
+
+- (void)touchesMovedWithEvent:(NSEvent *)event {
+	if (!Input::get_singleton()->is_emulating_touch_from_trackpad()){
+		return;
+	}
+		
+	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	if (!ds || !ds->has_window(window_id)) {
+		return;
+	}
+
+	NSSet *touches = [event touchesMatchingPhase:NSTouchPhaseMoved inView:self];
+	//touches = [event touchesForView:self];
+	for (NSTouch *touch in touches) {
+		NSLog(@"touchesMovedInnerLoop");
+		int tid = [self getTouchIDForTouch:touch.identity.hash];
+		//NSLog(tid);
+		//ERR_FAIL_COND(tid > 30);
+		ERR_FAIL_COND(tid == -1);
+		
+		CGPoint touchPoint = [touch normalizedPosition];
+		touchPoint.x = touchPoint.x * 1000; //ds.get_size().x;
+		touchPoint.y = touchPoint.y * 1000; //ds.get_size().y;
+
+		CGFloat force = 1.0; // [touch force] / [touch maximumPossibleForce]
+		CGPoint prev_point = touchPoint;// = [touch previousLocationInView:self];
+		//CGFloat alt = 0.0; //[touch altitudeAngle];
+		//CGVector azim; // = [touch azimuthUnitVectorInView:self];
+		//ds->touch_drag(tid, prev_point.x, prev_point.y, touchPoint.x, touchPoint.y, force, Vector2(azim.dx, azim.dy) * Math::cos(alt));
+		ds->touch_drag(window_id, tid, prev_point.x, prev_point.y, touchPoint.x, touchPoint.y, force, Vector2());
+	}
+}
+
+- (void)touchesEndedWithEvent:(NSEvent *)event {
+	if (!Input::get_singleton()->is_emulating_touch_from_trackpad()){
+		return;
+	}
+	
+	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	if (!ds || !ds->has_window(window_id)) {
+		return;
+	}
+
+	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseEnded inView:self];
+	//touches = [event allTouches];
+	for (NSTouch *touch in touches) {
+		NSLog(@"touchesEndedWithEventInnerLoop");
+		
+		int tid = [self getTouchIDForTouch:touch.identity.hash];
+		ERR_FAIL_COND(tid == -1);
+		[self removeTouch:touch.identity.hash];
+		CGPoint touchPoint = [touch normalizedPosition];
+		touchPoint.x = touchPoint.x * 1000; //ds.get_size().x;
+		touchPoint.y = touchPoint.y * 1000; //ds.get_size().y;
+		ds->touch_press(window_id, tid, touchPoint.x, touchPoint.y, false, false);
+		
+	}
+}
+
+- (void)touchesCancelledWithEvent:(NSEvent *)event {
+	if (!Input::get_singleton()->is_emulating_touch_from_trackpad()){
+		return;
+	}
+
+	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
+	if (!ds || !ds->has_window(window_id)) {
+		return;
+	}
+
+	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseCancelled inView:self];
+	//touches = [event allTouches];
+	for (NSTouch *touch in touches) {
+		NSLog(@"touchesCancelledWithEventInnerLoop");
+		int tid = [self getTouchIDForTouch:touch.identity.hash];
+		ERR_FAIL_COND(tid == -1);
+		ds->touches_canceled(window_id, tid);
+	}
+	[self clearTouches];
+}
+
 
 // MARK: Keyboard
 
