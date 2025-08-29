@@ -678,14 +678,14 @@
 
 - (void)initTouches {
 	for (int i = 0; i < max_touches; i++) {
-		godot_touches[i] = nullptr;
+		godot_touches[i] = 0;
 	}
 }
 
-- (int)getTouchIDForTouch:(NSTouch *)p_touch {
+- (int)getTouchIDForTouch:(NSUInteger)p_touch {
 	int first = -1;
 	for (int i = 0; i < max_touches; i++) {
-		if (first == -1 && godot_touches[i] == nullptr) {
+		if (first == -1 && godot_touches[i] == 0) {
 			first = i;
 			continue;
 		}
@@ -702,14 +702,14 @@
 	return -1;
 }
 
-- (int)removeTouch:(NSTouch *)p_touch {
+- (int)removeTouch:(NSUInteger)p_touch {
 	int remaining = 0;
 	for (int i = 0; i < max_touches; i++) {
-		if (godot_touches[i] == nullptr) {
+		if (godot_touches[i] == 0) {
 			continue;
 		}
 		if (godot_touches[i] == p_touch) {
-			godot_touches[i] = nullptr;
+			godot_touches[i] = 0;
 		} else {
 			++remaining;
 		}
@@ -719,7 +719,7 @@
 
 - (void)clearTouches {
 	for (int i = 0; i < max_touches; i++) {
-		godot_touches[i] = nullptr;
+		godot_touches[i] = 0;
 	}
 }
 
@@ -733,7 +733,7 @@
 	//touches = [event allTouches];
 	for (NSTouch *touch in touches) {
 		NSLog(@"touchesBeganWithEventInnerLoop");
-		int tid = [self getTouchIDForTouch:touch];
+		int tid = [self getTouchIDForTouch:touch.identity.hash];
 		ERR_FAIL_COND(tid == -1);
 		CGPoint touchPoint = [touch locationInView:self];
 		ds->touch_press(tid, touchPoint.x, touchPoint.y, true, false); //touch.tapCount > 1);
@@ -748,7 +748,9 @@
 	//touches = [event touchesForView:self];
 	for (NSTouch *touch in touches) {
 		NSLog(@"touchesMovedInnerLoop");
-		int tid = [self getTouchIDForTouch:touch];
+		int tid = [self getTouchIDForTouch:touch.identity.hash];
+		//NSLog(tid);
+		ERR_FAIL_COND(tid > 30);
 		ERR_FAIL_COND(tid == -1);
 		CGPoint touchPoint = [touch locationInView:self];
 		CGFloat force = 1.0; // [touch force] / [touch maximumPossibleForce]
@@ -764,13 +766,13 @@
 
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
 	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseEnded inView:self];
-	touches = [event allTouches];
+	//touches = [event allTouches];
 	for (NSTouch *touch in touches) {
 		NSLog(@"touchesEndedWithEventInnerLoop");
 		
-		int tid = [self getTouchIDForTouch:touch];
+		int tid = [self getTouchIDForTouch:touch.identity.hash];
 		ERR_FAIL_COND(tid == -1);
-		[self removeTouch:touch];
+		[self removeTouch:touch.identity.hash];
 		CGPoint touchPoint = [touch locationInView:self];
 		ds->touch_press(tid, touchPoint.x, touchPoint.y, false, false);
 		
@@ -782,10 +784,10 @@
 	
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
 	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseCancelled inView:self];
-	touches = [event allTouches];
+	//touches = [event allTouches];
 	for (NSTouch *touch in touches) {
 		NSLog(@"touchesCancelledWithEventInnerLoop");
-		int tid = [self getTouchIDForTouch:touch];
+		int tid = [self getTouchIDForTouch:touch.identity.hash];
 		ERR_FAIL_COND(tid == -1);
 		ds->touches_canceled(tid);
 	}

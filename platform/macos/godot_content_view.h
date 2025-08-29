@@ -70,7 +70,7 @@ static const int max_touches = 32;
 	id layer_delegate;
 	NSMutableSet<NSString *> *registered_observers;
 
-	NSTouch *godot_touches[max_touches];
+	NSUInteger godot_touches[max_touches];
 }
 
 - (void)processScrollEvent:(NSEvent *)event button:(MouseButton)button factor:(double)factor;
