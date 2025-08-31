@@ -740,8 +740,15 @@
 		int tid = [self getTouchIDForTouch:touch.identity.hash];
 		ERR_FAIL_COND(tid == -1);
 		CGPoint touchPoint = [touch normalizedPosition];
-		touchPoint.x = touchPoint.x * 1000; //ds.get_size().x;
-		touchPoint.y = touchPoint.y * 1000; //ds.get_size().y;
+
+		// Move the origin to the upper left
+		touchPoint.y = 1.0 - touchPoint.y;
+
+		Size2i window_size = ds->window_get_size();
+
+		touchPoint.x = touchPoint.x * double(window_size.x);
+		touchPoint.y = touchPoint.y * double(window_size.y);
+
 		ds->touch_press(window_id, tid, touchPoint.x, touchPoint.y, true, false); //touch.tapCount > 1);
 	}
 }
@@ -766,11 +773,22 @@
 		ERR_FAIL_COND(tid == -1);
 		
 		CGPoint touchPoint = [touch normalizedPosition];
-		touchPoint.x = touchPoint.x * 1000; //ds.get_size().x;
-		touchPoint.y = touchPoint.y * 1000; //ds.get_size().y;
+		
+		// Move the origin to the upper left
+		touchPoint.y = 1.0 - touchPoint.y;
 
+		// TODO: Find a way to get the window size
+		// window->get_size() ?
+		Size2i window_size = ds->window_get_size();
+		//NSRect rect = [self bounds];
+
+		touchPoint.x = touchPoint.x * double(window_size.x); //ds.get_size().x;
+		touchPoint.y = touchPoint.y * double(window_size.y); //ds.get_size().y;
+
+		// Cannot access force from NSTouch :(
 		CGFloat force = 1.0; // [touch force] / [touch maximumPossibleForce]
 		CGPoint prev_point = touchPoint;// = [touch previousLocationInView:self];
+
 		//CGFloat alt = 0.0; //[touch altitudeAngle];
 		//CGVector azim; // = [touch azimuthUnitVectorInView:self];
 		//ds->touch_drag(tid, prev_point.x, prev_point.y, touchPoint.x, touchPoint.y, force, Vector2(azim.dx, azim.dy) * Math::cos(alt));
@@ -797,8 +815,15 @@
 		ERR_FAIL_COND(tid == -1);
 		[self removeTouch:touch.identity.hash];
 		CGPoint touchPoint = [touch normalizedPosition];
-		touchPoint.x = touchPoint.x * 1000; //ds.get_size().x;
-		touchPoint.y = touchPoint.y * 1000; //ds.get_size().y;
+		
+		// Move the origin to the upper left
+		touchPoint.y = 1.0 - touchPoint.y;
+
+		Size2i window_size = ds->window_get_size();
+
+		touchPoint.x = touchPoint.x * double(window_size.x);
+		touchPoint.y = touchPoint.y * double(window_size.y);
+
 		ds->touch_press(window_id, tid, touchPoint.x, touchPoint.y, false, false);
 		
 	}
