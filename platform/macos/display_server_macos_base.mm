@@ -302,11 +302,9 @@ void DisplayServerMacOSBase::show_emoji_and_symbol_picker() const {
 }
 
 
-// MARK: Touches
+// MARK: Trackpad touches
 
 void DisplayServerMacOSBase::touch_press(DisplayServer::WindowID window_id, int p_idx, int p_x, int p_y, bool p_pressed, bool p_double_click) {
-	NSLog(@"touch_press");
-
 	Ref<InputEventScreenTouch> ev;
 	ev.instantiate();
 
@@ -322,8 +320,6 @@ void DisplayServerMacOSBase::touch_drag(DisplayServer::WindowID window_id, int p
 	Ref<InputEventScreenDrag> ev;
 	ev.instantiate();
 
-	NSLog(@"touch_drag");
-
 	ev->set_window_id(window_id);
 	ev->set_index(p_idx);
 	ev->set_pressure(p_pressure);
@@ -336,13 +332,10 @@ void DisplayServerMacOSBase::touch_drag(DisplayServer::WindowID window_id, int p
 
 void DisplayServerMacOSBase::perform_event(const Ref<InputEvent> &p_event) {
 	Input *input_singleton = Input::get_singleton();
+	
 	if (input_singleton == nullptr) {
-		NSLog(@"ruhroh");
 		return;
 	}
-
-
-	NSLog(@"parse_input_event");
 
 	input_singleton->parse_input_event(p_event);
 }

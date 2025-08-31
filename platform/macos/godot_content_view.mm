@@ -153,7 +153,6 @@
 	[self initTouches];
 	
 	{
-		NSLog(@"Enabling trackpad multitouch!");
 		self.allowedTouchTypes = NSTouchTypeMaskIndirect;
 		self.wantsRestingTouches = true;
 	}
@@ -628,8 +627,6 @@
 }
 
 - (void)mouseEntered:(NSEvent *)event {
-	NSLog(@"mouseEntered");
-
 	DisplayServerMacOS *ds = (DisplayServerMacOS *)DisplayServer::get_singleton();
 	if (!ds || !ds->has_window(window_id)) {
 		return;
@@ -734,9 +731,7 @@
 
 	NSSet *touches = [event touchesMatchingPhase:NSTouchPhaseBegan inView:self];
 
-	//touches = [event allTouches];
 	for (NSTouch *touch in touches) {
-		NSLog(@"touchesBeganWithEventInnerLoop");
 		int tid = [self getTouchIDForTouch:touch.identity.hash];
 		ERR_FAIL_COND(tid == -1);
 		CGPoint touchPoint = [touch normalizedPosition];
@@ -749,7 +744,7 @@
 		touchPoint.x = touchPoint.x * double(window_size.x);
 		touchPoint.y = touchPoint.y * double(window_size.y);
 
-		ds->touch_press(window_id, tid, touchPoint.x, touchPoint.y, true, false); //touch.tapCount > 1);
+		ds->touch_press(window_id, tid, touchPoint.x, touchPoint.y, true, false);
 	}
 }
 
@@ -764,12 +759,10 @@
 	}
 
 	NSSet *touches = [event touchesMatchingPhase:NSTouchPhaseMoved inView:self];
-	//touches = [event touchesForView:self];
+
 	for (NSTouch *touch in touches) {
-		NSLog(@"touchesMovedInnerLoop");
 		int tid = [self getTouchIDForTouch:touch.identity.hash];
-		//NSLog(tid);
-		//ERR_FAIL_COND(tid > 30);
+		
 		ERR_FAIL_COND(tid == -1);
 		
 		CGPoint touchPoint = [touch normalizedPosition];
@@ -777,21 +770,15 @@
 		// Move the origin to the upper left
 		touchPoint.y = 1.0 - touchPoint.y;
 
-		// TODO: Find a way to get the window size
-		// window->get_size() ?
 		Size2i window_size = ds->window_get_size();
-		//NSRect rect = [self bounds];
 
-		touchPoint.x = touchPoint.x * double(window_size.x); //ds.get_size().x;
-		touchPoint.y = touchPoint.y * double(window_size.y); //ds.get_size().y;
+		touchPoint.x = touchPoint.x * double(window_size.x);
+		touchPoint.y = touchPoint.y * double(window_size.y);
 
 		// Cannot access force from NSTouch :(
-		CGFloat force = 1.0; // [touch force] / [touch maximumPossibleForce]
-		CGPoint prev_point = touchPoint;// = [touch previousLocationInView:self];
+		CGFloat force = 1.0;
+		CGPoint prev_point = touchPoint;
 
-		//CGFloat alt = 0.0; //[touch altitudeAngle];
-		//CGVector azim; // = [touch azimuthUnitVectorInView:self];
-		//ds->touch_drag(tid, prev_point.x, prev_point.y, touchPoint.x, touchPoint.y, force, Vector2(azim.dx, azim.dy) * Math::cos(alt));
 		ds->touch_drag(window_id, tid, prev_point.x, prev_point.y, touchPoint.x, touchPoint.y, force, Vector2());
 	}
 }
@@ -807,15 +794,15 @@
 	}
 
 	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseEnded inView:self];
-	//touches = [event allTouches];
+
 	for (NSTouch *touch in touches) {
-		NSLog(@"touchesEndedWithEventInnerLoop");
-		
 		int tid = [self getTouchIDForTouch:touch.identity.hash];
+
 		ERR_FAIL_COND(tid == -1);
+
 		[self removeTouch:touch.identity.hash];
 		CGPoint touchPoint = [touch normalizedPosition];
-		
+
 		// Move the origin to the upper left
 		touchPoint.y = 1.0 - touchPoint.y;
 
@@ -840,13 +827,15 @@
 	}
 
 	NSSet *touches = [event touchesMatchingPhase:NSEventPhaseCancelled inView:self];
-	//touches = [event allTouches];
+	
 	for (NSTouch *touch in touches) {
-		NSLog(@"touchesCancelledWithEventInnerLoop");
 		int tid = [self getTouchIDForTouch:touch.identity.hash];
+
 		ERR_FAIL_COND(tid == -1);
+
 		ds->touches_canceled(window_id, tid);
 	}
+
 	[self clearTouches];
 }
 
