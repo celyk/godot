@@ -301,6 +301,50 @@ void DisplayServerMacOSBase::show_emoji_and_symbol_picker() const {
 	[[NSApplication sharedApplication] orderFrontCharacterPalette:nil];
 }
 
+
+// MARK: Trackpad touches
+
+void DisplayServerMacOSBase::touch_press(DisplayServer::WindowID window_id, int p_idx, int p_x, int p_y, bool p_pressed, bool p_double_click) {
+	Ref<InputEventScreenTouch> ev;
+	ev.instantiate();
+
+	ev->set_window_id(window_id);
+	ev->set_index(p_idx);
+	ev->set_pressed(p_pressed);
+	ev->set_position(Vector2(p_x, p_y));
+	ev->set_double_tap(p_double_click);
+	perform_event(ev);
+}
+
+void DisplayServerMacOSBase::touch_drag(DisplayServer::WindowID window_id, int p_idx, int p_prev_x, int p_prev_y, int p_x, int p_y, float p_pressure, Vector2 p_tilt) {
+	Ref<InputEventScreenDrag> ev;
+	ev.instantiate();
+
+	ev->set_window_id(window_id);
+	ev->set_index(p_idx);
+	ev->set_pressure(p_pressure);
+	ev->set_tilt(p_tilt);
+	ev->set_position(Vector2(p_x, p_y));
+	ev->set_relative(Vector2(p_x - p_prev_x, p_y - p_prev_y));
+	ev->set_relative_screen_position(ev->get_relative());
+	perform_event(ev);
+}
+
+void DisplayServerMacOSBase::perform_event(const Ref<InputEvent> &p_event) {
+	Input *input_singleton = Input::get_singleton();
+	
+	if (input_singleton == nullptr) {
+		return;
+	}
+
+	input_singleton->parse_input_event(p_event);
+}
+
+void DisplayServerMacOSBase::touches_canceled(DisplayServer::WindowID window_id, int p_idx) {
+	touch_press(window_id, p_idx, -1, -1, false, false);
+}
+
+
 DisplayServerMacOSBase::DisplayServerMacOSBase() {
 	// Init TTS
 	bool tts_enabled = GLOBAL_GET("audio/general/text_to_speech");

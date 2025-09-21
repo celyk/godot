@@ -85,6 +85,14 @@ public:
 	virtual void tts_resume() override;
 	virtual void tts_stop() override;
 
+	// MARK: Trackpad touches
+
+	void touch_press(DisplayServer::WindowID window_id, int p_idx, int p_x, int p_y, bool p_pressed, bool p_double_click);
+	void touch_drag(DisplayServer::WindowID window_id, int p_idx, int p_prev_x, int p_prev_y, int p_x, int p_y, float p_pressure, Vector2 p_tilt);
+	void touches_canceled(DisplayServer::WindowID window_id, int p_idx);
+	void perform_event(const Ref<InputEvent> &p_event);
+
+
 	DisplayServerMacOSBase();
 	~DisplayServerMacOSBase();
 };

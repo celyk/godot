@@ -170,11 +170,14 @@ void Input::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_emulating_mouse_from_touch"), &Input::is_emulating_mouse_from_touch);
 	ClassDB::bind_method(D_METHOD("set_emulate_touch_from_mouse", "enable"), &Input::set_emulate_touch_from_mouse);
 	ClassDB::bind_method(D_METHOD("is_emulating_touch_from_mouse"), &Input::is_emulating_touch_from_mouse);
+	ClassDB::bind_method(D_METHOD("set_emulate_touch_from_trackpad", "enable"), &Input::set_emulate_touch_from_trackpad);
+	ClassDB::bind_method(D_METHOD("is_emulating_touch_from_trackpad"), &Input::is_emulating_touch_from_trackpad);
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "mouse_mode"), "set_mouse_mode", "get_mouse_mode");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_accumulated_input"), "set_use_accumulated_input", "is_using_accumulated_input");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "emulate_mouse_from_touch"), "set_emulate_mouse_from_touch", "is_emulating_mouse_from_touch");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "emulate_touch_from_mouse"), "set_emulate_touch_from_mouse", "is_emulating_touch_from_mouse");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "emulate_touch_from_trackpad"), "set_emulate_touch_from_trackpad", "is_emulating_touch_from_trackpad");
 
 	BIND_ENUM_CONSTANT(MOUSE_MODE_VISIBLE);
 	BIND_ENUM_CONSTANT(MOUSE_MODE_HIDDEN);
@@ -1161,6 +1164,14 @@ void Input::set_emulate_mouse_from_touch(bool p_emulate) {
 
 bool Input::is_emulating_mouse_from_touch() const {
 	return emulate_mouse_from_touch;
+}
+
+void Input::set_emulate_touch_from_trackpad(bool p_emulate) {
+	emulate_touch_from_trackpad = p_emulate;
+}
+
+bool Input::is_emulating_touch_from_trackpad() const {
+	return emulate_touch_from_trackpad;
 }
 
 Input::CursorShape Input::get_default_cursor_shape() const {
