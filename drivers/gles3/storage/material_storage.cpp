@@ -1194,6 +1194,7 @@ MaterialStorage::MaterialStorage() {
 		actions.renames["SPECULAR_SHININESS"] = "specular_shininess";
 		actions.renames["SCREEN_UV"] = "screen_uv";
 		actions.renames["REGION_RECT"] = "region_rect";
+		actions.renames["DRAW_RECT"] = "draw_rect";
 		actions.renames["SCREEN_PIXEL_SIZE"] = "screen_pixel_size";
 		actions.renames["FRAGCOORD"] = "gl_FragCoord";
 		actions.renames["POINT_COORD"] = "gl_PointCoord";

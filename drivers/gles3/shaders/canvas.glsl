@@ -154,6 +154,14 @@ void main() {
 	vec4 custom1 = vec4(0.0);
 #endif
 
+#if !defined(USE_ATTRIBUTES) && !defined(USE_PRIMITIVE)
+	//vec4 region_rect = read_draw_data_src_rect;
+	vec4 draw_rect = read_draw_data_dst_rect;
+#else
+	vec4 region_rect = vec4(0.0, 0.0, 1.0 / read_draw_data_color_texture_pixel_size);
+	vec4 draw_rect = region_rect;
+#endif
+
 #ifdef USE_PRIMITIVE
 	vec2 vertex;
 	vec2 uv;
