@@ -41,6 +41,7 @@
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_iostream.h>
+#include <SDL3/SDL_gamepad.h>
 #include <SDL3/SDL_joystick.h>
 
 // Macro to skip the SDL joystick event handling if the device is an SDL gamepad, because
