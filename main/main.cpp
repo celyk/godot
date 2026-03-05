@@ -3182,7 +3182,7 @@ Error Main::setup2(bool p_show_boot_logo) {
 		OS::get_singleton()->benchmark_begin_measure("Servers", "Input");
 
 		input = memnew(Input);
-		OS::get_singleton()->initialize_joypads();
+		//OS::get_singleton()->initialize_joypads();
 
 		OS::get_singleton()->benchmark_end_measure("Servers", "Input");
 	}
@@ -3466,6 +3466,8 @@ Error Main::setup2(bool p_show_boot_logo) {
 				   "However, bear in mind that at the moment it can lead to project crashes or instability.\n"
 				   "So, unless you want to test the engine, set the \"rendering/driver/threads/thread_model\" project setting to 'Safe'.");
 	}
+
+	OS::get_singleton()->initialize_joypads();
 
 	/* Initialize Pen Tablet Driver */
 

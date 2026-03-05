@@ -36,7 +36,12 @@
 #include "core/os/time.h"
 #include "core/variant/dictionary.h"
 
+#include "servers/display/display_server.h"
+
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_video.h>
+#include <SDL3/SDL_events.h>
 #include <SDL3/SDL_error.h>
 #include <SDL3/SDL_events.h>
 #include <SDL3/SDL_gamepad.h>
@@ -64,7 +69,37 @@ JoypadSDL::~JoypadSDL() {
 Error JoypadSDL::initialize() {
 	SDL_SetHint(SDL_HINT_JOYSTICK_THREAD, "1");
 	SDL_SetHint(SDL_HINT_NO_SIGNAL_HANDLERS, "1");
-	ERR_FAIL_COND_V_MSG(!SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD), FAILED, SDL_GetError());
+	ERR_FAIL_COND_V_MSG(!SDL_Init(SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD | SDL_INIT_VIDEO | SDL_INIT_EVENTS), FAILED, SDL_GetError());
+
+	//return OK;
+
+	int64_t window_handle = DisplayServer::get_singleton()->window_get_native_handle(DisplayServerEnums::WINDOW_HANDLE, 0);
+	
+
+	//ERR_FAIL_COND_V_MSG(SDL_GetError()!="", FAILED, SDL_GetError());
+
+    SDL_PropertiesID properties = SDL_CreateProperties();
+    
+    SDL_SetPointerProperty(properties, SDL_PROP_WINDOW_CREATE_COCOA_WINDOW_POINTER, (void*)window_handle);
+
+    // Title
+    SDL_SetStringProperty(
+        properties,
+        SDL_PROP_WINDOW_CREATE_TITLE_STRING,
+        "Hello Window"
+    );
+    
+    SDL_Log("Potential error2: %s", SDL_GetError());
+
+
+    //SDL_CreateWindow("Test window", 320, 240, SDL_WINDOW_RESIZABLE);
+    SDL_Window* sdl_window_handle = SDL_CreateWindowWithProperties(properties);
+
+    if (!sdl_window_handle)
+    {
+        SDL_Log("invalid handle");
+        return ERR_BUG;
+    }
 
 	// Add Godot's mapping database from memory
 	int i = 0;
@@ -83,6 +118,16 @@ Error JoypadSDL::initialize() {
 }
 
 void JoypadSDL::process_events() {
+	SDL_Event event;
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_EVENT_KEY_DOWN) {
+            SDL_Log("Key!");
+        }
+        SDL_Log("Event!");
+    }
+
+	return;
+
 	// Update rumble first for it to be applied when we handle SDL events
 	for (int i = 0; i < Input::JOYPADS_MAX; i++) {
 		Joypad &joy = joypads[i];
